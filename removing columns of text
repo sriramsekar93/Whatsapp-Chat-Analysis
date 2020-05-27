@@ -1,0 +1,36 @@
+import numpy as np
+import pandas as pd
+import re
+import seaborn as sns
+import matplotlib.pyplot as plt
+import sys
+!{sys.executable} -m pip install wordcloud
+from wordcloud import WordCloud, STOPWORDS
+#open data file specifying path#
+file= open('C:\\Users\\User\Downloads\WhatsApp Chat with CSK ftw (2).txt',encoding='UTF-8',mode='r')
+file_data=file.read()
+file.close()
+#using delimiter to split the data into lines#
+split_Data=file_data.split("\n")
+#associating each line with a variable#
+df=pd.DataFrame({"data":split_Data})
+#Extracting Group Names, Usually stored as "changed from" or "created the group"#
+df["grp_name"]=df["data"].str.extract("(created group\s.*|changed the subject from\s.*)",expand=True)
+#keeping only the group name#
+df["grp_name"]=df["grp_name"].str.replace("created group ","")
+df["grp_name"]=df["grp_name"].str.replace("changed the subject from ","")
+#filling the nan values using ffill with the last valid group name to all rows#
+df["grp_name"].fillna(method='ffill',inplace=True)
+#changed from group name to new group name , in this we have to retain only the new group name #
+df["grp_name"]=df["grp_name"].astype(str)
+df["grp_name"]=df["grp_name"].apply(lambda x:x.split("to"))
+df["grp_name"]=df["grp_name"].apply(lambda x:x[-1])
+#date from datetime column
+df["date"]=df["data"].str.extract('(\d+\/\d+\/\d+)',expand=True)
+df["time"]=df["data"].str.extract('(\d+\:\d+\s\w*)',expand=True)
+df["name"]=df["data"].str.extract("(-\s\w*.*:)",expand=True)
+df["name"]=df["name"].str.replace('-','')
+df["name"]=df["name"].str.replace(':','')
+df["text"]=df["data"].str.extract("(:\s\w*.*)",expand=True)
+df["text"]=df["text"].str.replace(':','')
+df=df[df.text.notnull()]
